@@ -1,0 +1,527 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import Image from "next/image"
+import Link from "next/link"
+import {
+  Clock,
+  Calendar,
+  Star,
+  ArrowLeft,
+  RefreshCw,
+  AlertCircle,
+  User,
+  X,
+  Loader2,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react"
+import { getMovieDetails, TMDB_IMAGE_BASE_URL, POSTER_SIZES, BACKDROP_SIZES } from "@/lib/tmdb"
+import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Badge } from "@/components/ui/badge"
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Card, CardContent } from "@/components/ui/card"
+
+interface MovieDetailsPageProps {
+  params: {
+    id: string
+  }
+}
+
+export default function MovieDetailsPage({ params }: MovieDetailsPageProps) {
+  const [movie, setMovie] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [similarMovies, setSimilarMovies] = useState<any[]>([])
+  const [selectedPerson, setSelectedPerson] = useState<any>(null)
+  const [personMovies, setPersonMovies] = useState<any[]>([])
+  const [personLoading, setPersonLoading] = useState(false)
+  const [showAllCast, setShowAllCast] = useState(false)
+
+  const fetchMovieDetails = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const data = await getMovieDetails(Number.parseInt(params.id))
+      setMovie(data)
+
+      // Fetch similar movies
+      const similarResponse = await fetch(
+        `https://api.themoviedb.org/3/movie/${params.id}/similar?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=en-US&page=1`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      )
+
+      if (similarResponse.ok) {
+        const similarData = await similarResponse.json()
+        setSimilarMovies(similarData.results.slice(0, 10))
+      }
+    } catch (error) {
+      console.error("Error fetching movie details:", error)
+      setError(error instanceof Error ? error.message : "Failed to fetch movie details")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchPersonDetails = async (personId: number) => {
+    setPersonLoading(true)
+    try {
+      // Fetch person details
+      const personResponse = await fetch(
+        `https://api.themoviedb.org/3/person/${personId}?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=en-US`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      )
+
+      if (personResponse.ok) {
+        const personData = await personResponse.json()
+        setSelectedPerson(personData)
+      }
+
+      // Fetch person movies
+      const creditsResponse = await fetch(
+        `https://api.themoviedb.org/3/person/${personId}/movie_credits?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=en-US`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      )
+
+      if (creditsResponse.ok) {
+        const creditsData = await creditsResponse.json()
+        setPersonMovies(creditsData.cast.slice(0, 12))
+      }
+    } catch (error) {
+      console.error("Error fetching person details:", error)
+    } finally {
+      setPersonLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchMovieDetails()
+  }, [params.id])
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="space-y-8">
+          <Skeleton className="h-[400px] w-full rounded-lg" />
+          <Skeleton className="h-10 w-2/3" />
+          <Skeleton className="h-6 w-1/3" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <Skeleton className="h-[450px] rounded-lg" />
+            <div className="md:col-span-2 space-y-4">
+              <Skeleton className="h-6 w-full" />
+              <Skeleton className="h-6 w-full" />
+              <Skeleton className="h-6 w-full" />
+              <Skeleton className="h-6 w-2/3" />
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Link href="/">
+          <Button variant="outline" className="mb-6 group">
+            <ArrowLeft className="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1" />
+            Back to Home
+          </Button>
+        </Link>
+
+        <Alert variant="destructive" className="mb-6 animate-in fade-in-50 duration-300">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription className="flex flex-col gap-2">
+            <p>{error}</p>
+            <Button variant="outline" size="sm" className="w-fit" onClick={fetchMovieDetails}>
+              <RefreshCw className="mr-2 h-4 w-4" /> Try Again
+            </Button>
+          </AlertDescription>
+        </Alert>
+      </div>
+    )
+  }
+
+  if (!movie) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold">Movie not found</h1>
+        <Link href="/">
+          <Button className="mt-4 group">
+            <ArrowLeft className="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1" />
+            Back to Home
+          </Button>
+        </Link>
+      </div>
+    )
+  }
+
+  const backdropUrl = movie.backdrop_path
+    ? `${TMDB_IMAGE_BASE_URL}/${BACKDROP_SIZES.large}${movie.backdrop_path}`
+    : null
+
+  const posterUrl = movie.poster_path
+    ? `${TMDB_IMAGE_BASE_URL}/${POSTER_SIZES.large}${movie.poster_path}`
+    : "/placeholder.svg?height=750&width=500"
+
+  const trailer = movie.videos?.results.find((video: any) => video.type === "Trailer" && video.site === "YouTube")
+
+  const formatRuntime = (minutes: number) => {
+    const hours = Math.floor(minutes / 60)
+    const mins = minutes % 60
+    return `${hours}h ${mins}m`
+  }
+
+  // Filter to only include actors (not crew)
+  const cast = movie.credits.cast.filter(
+    (person: any) =>
+      person.known_for_department === "Acting" ||
+      person.department === "Acting" ||
+      person.job === "Actor" ||
+      person.job === "Actress",
+  )
+
+  // Initial display count and whether we need a "View More" button
+  const initialCastCount = 12
+  const hasMoreCast = cast.length > initialCastCount
+  const displayedCast = showAllCast ? cast : cast.slice(0, initialCastCount)
+
+  return (
+    <>
+      {backdropUrl && (
+        <div className="relative h-[400px] w-full">
+          <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent z-10" />
+          <Image src={backdropUrl || "/placeholder.svg"} alt={movie.title} fill className="object-cover" priority />
+        </div>
+      )}
+
+      <div className="container mx-auto px-4 py-8 relative z-20">
+        <Link href="/">
+          <Button variant="outline" className="mb-6 group">
+            <ArrowLeft className="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1" />
+            Back to Home
+          </Button>
+        </Link>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="relative aspect-[2/3] md:aspect-auto md:h-auto rounded-lg overflow-hidden shadow-lg animate-in fade-in-50 slide-in-from-left-5 duration-500">
+            <Image
+              src={posterUrl || "/placeholder.svg"}
+              alt={movie.title}
+              className="object-cover"
+              fill
+              sizes="(max-width: 768px) 100vw, 33vw"
+            />
+          </div>
+
+          <div className="md:col-span-2 animate-in fade-in-50 slide-in-from-right-5 duration-500">
+            <h1 className="text-3xl font-bold mb-2">{movie.title}</h1>
+
+            {movie.tagline && <p className="text-xl italic text-muted-foreground mb-4">{movie.tagline}</p>}
+
+            <div className="flex flex-wrap gap-2 mb-4">
+              {movie.genres.map((genre: any) => (
+                <Link key={genre.id} href={`/category/${genre.id}`}>
+                  <Badge
+                    variant="secondary"
+                    className="transition-colors hover:bg-primary hover:text-primary-foreground"
+                  >
+                    {genre.name}
+                  </Badge>
+                </Link>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-6">
+              {movie.release_date && (
+                <div className="flex items-center">
+                  <Calendar className="mr-1 h-4 w-4" />
+                  {new Date(movie.release_date).toLocaleDateString()}
+                </div>
+              )}
+
+              {movie.runtime > 0 && (
+                <div className="flex items-center">
+                  <Clock className="mr-1 h-4 w-4" />
+                  {formatRuntime(movie.runtime)}
+                </div>
+              )}
+
+              <div className="flex items-center">
+                <Star className="mr-1 h-4 w-4 fill-yellow-400 text-yellow-400" />
+                {movie.vote_average.toFixed(1)} ({movie.vote_count} votes)
+              </div>
+            </div>
+
+            <div className="mb-8">
+              <h2 className="text-xl font-semibold mb-2">Overview</h2>
+              <p className="text-muted-foreground">{movie.overview}</p>
+            </div>
+
+            {trailer && (
+              <div className="mb-8">
+                <h2 className="text-xl font-semibold mb-4">Trailer</h2>
+                <div className="aspect-video rounded-lg overflow-hidden shadow-lg">
+                  <iframe
+                    src={`https://www.youtube.com/embed/${trailer.key}`}
+                    title={`${movie.title} Trailer`}
+                    allowFullScreen
+                    className="w-full h-full"
+                  ></iframe>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Cast Section */}
+        {displayedCast.length > 0 && (
+          <div className="mt-12">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-semibold">Cast</h2>
+              {hasMoreCast && (
+                <Button
+                  variant="outline"
+                  onClick={() => setShowAllCast(!showAllCast)}
+                  className="flex items-center gap-1"
+                >
+                  {showAllCast ? (
+                    <>
+                      <ChevronUp className="h-4 w-4" />
+                      Show Less
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="h-4 w-4" />
+                      View All Cast ({cast.length})
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+
+            <div
+              className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 ${showAllCast ? "" : "mb-4"}`}
+            >
+              {displayedCast.map((person: any) => {
+                const profileUrl = person.profile_path
+                  ? `${TMDB_IMAGE_BASE_URL}/w185${person.profile_path}`
+                  : "/placeholder.svg?height=278&width=185"
+
+                return (
+                  <div
+                    key={person.id}
+                    className="text-center cursor-pointer group"
+                    onClick={() => fetchPersonDetails(person.id)}
+                  >
+                    <div className="aspect-[2/3] relative mb-2 rounded-lg overflow-hidden shadow-md transition-transform duration-300 group-hover:scale-105">
+                      <Image
+                        src={profileUrl || "/placeholder.svg"}
+                        alt={person.name}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw"
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                        <User className="h-8 w-8 text-white" />
+                      </div>
+                    </div>
+                    <p className="font-medium line-clamp-1 group-hover:text-primary transition-colors">{person.name}</p>
+                    <p className="text-sm text-muted-foreground line-clamp-1">{person.character}</p>
+                  </div>
+                )
+              })}
+            </div>
+
+            {hasMoreCast && !showAllCast && (
+              <div className="flex justify-center mt-4 mb-8">
+                <Button variant="outline" onClick={() => setShowAllCast(true)} className="flex items-center gap-1">
+                  <ChevronDown className="h-4 w-4" />
+                  View All Cast ({cast.length})
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Similar Movies Section */}
+        {similarMovies.length > 0 && (
+          <div className="mt-12">
+            <h2 className="text-2xl font-semibold mb-6">Similar Movies</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {similarMovies.map((movie) => {
+                const imageUrl = movie.poster_path
+                  ? `${TMDB_IMAGE_BASE_URL}/${POSTER_SIZES.medium}${movie.poster_path}`
+                  : "/placeholder.svg?height=513&width=342"
+
+                return (
+                  <Link href={`/movie/${movie.id}`} key={movie.id}>
+                    <Card className="overflow-hidden h-full transition-all duration-300 hover:scale-105 hover:shadow-lg group">
+                      <div className="aspect-[2/3] relative overflow-hidden">
+                        <Image
+                          src={imageUrl || "/placeholder.svg"}
+                          alt={movie.title}
+                          fill
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          className="object-cover group-hover:scale-110 transition-transform duration-500"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+                          <p className="text-white font-medium line-clamp-2">{movie.title}</p>
+                        </div>
+                      </div>
+                      <CardContent className="p-4">
+                        <h3 className="font-semibold line-clamp-1">{movie.title}</h3>
+                        <div className="flex items-center justify-between mt-2 text-sm text-muted-foreground">
+                          {movie.release_date && <span>{new Date(movie.release_date).getFullYear()}</span>}
+                          <div className="flex items-center">
+                            <Star className="w-4 h-4 mr-1 fill-yellow-400 text-yellow-400" />
+                            <span>{movie.vote_average.toFixed(1)}</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Person Modal */}
+        {selectedPerson && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
+            <div className="bg-background rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="sticky top-0 bg-background p-4 border-b flex justify-between items-center">
+                <h2 className="text-xl font-bold">{selectedPerson.name}</h2>
+                <Button variant="ghost" size="icon" onClick={() => setSelectedPerson(null)}>
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+
+              {personLoading ? (
+                <div className="p-6 flex flex-col items-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+                  <p>Loading...</p>
+                </div>
+              ) : (
+                <div className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                      <div className="aspect-[2/3] relative rounded-lg overflow-hidden shadow-lg mb-4">
+                        <Image
+                          src={
+                            selectedPerson.profile_path
+                              ? `${TMDB_IMAGE_BASE_URL}/w342${selectedPerson.profile_path}`
+                              : "/placeholder.svg?height=513&width=342"
+                          }
+                          alt={selectedPerson.name}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        {selectedPerson.birthday && (
+                          <p className="text-sm">
+                            <span className="font-semibold">Born:</span>{" "}
+                            {new Date(selectedPerson.birthday).toLocaleDateString()}
+                            {selectedPerson.place_of_birth && ` in ${selectedPerson.place_of_birth}`}
+                          </p>
+                        )}
+                        {selectedPerson.known_for_department && (
+                          <p className="text-sm">
+                            <span className="font-semibold">Known for:</span> {selectedPerson.known_for_department}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <Tabs defaultValue="bio">
+                        <TabsList className="mb-4">
+                          <TabsTrigger value="bio">Biography</TabsTrigger>
+                          <TabsTrigger value="movies">Movies</TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="bio" className="space-y-4">
+                          {selectedPerson.biography ? (
+                            <p className="text-muted-foreground">{selectedPerson.biography}</p>
+                          ) : (
+                            <p className="text-muted-foreground">No biography available.</p>
+                          )}
+                        </TabsContent>
+
+                        <TabsContent value="movies">
+                          {personMovies.length > 0 ? (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                              {personMovies.map((movie) => {
+                                const imageUrl = movie.poster_path
+                                  ? `${TMDB_IMAGE_BASE_URL}/${POSTER_SIZES.small}${movie.poster_path}`
+                                  : "/placeholder.svg?height=278&width=185"
+
+                                return (
+                                  <Link
+                                    href={`/movie/${movie.id}`}
+                                    key={movie.id}
+                                    onClick={() => setSelectedPerson(null)}
+                                  >
+                                    <Card className="overflow-hidden h-full transition-all duration-300 hover:scale-105 hover:shadow-lg">
+                                      <div className="flex">
+                                        <div className="w-1/3 relative">
+                                          <Image
+                                            src={imageUrl || "/placeholder.svg"}
+                                            alt={movie.title}
+                                            width={92}
+                                            height={138}
+                                            className="object-cover h-full"
+                                          />
+                                        </div>
+                                        <CardContent className="p-3 w-2/3">
+                                          <h3 className="font-semibold line-clamp-1 text-sm">{movie.title}</h3>
+                                          <p className="text-xs text-muted-foreground line-clamp-1">
+                                            {movie.character && `as ${movie.character}`}
+                                          </p>
+                                          {movie.release_date && (
+                                            <p className="text-xs mt-1">{new Date(movie.release_date).getFullYear()}</p>
+                                          )}
+                                        </CardContent>
+                                      </div>
+                                    </Card>
+                                  </Link>
+                                )
+                              })}
+                            </div>
+                          ) : (
+                            <p className="text-muted-foreground">No movies available.</p>
+                          )}
+                        </TabsContent>
+                      </Tabs>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </>
+  )
+}
