@@ -68,12 +68,12 @@ export default function Navbar() {
       <div className="container flex h-16 items-center ml-4 md:ml-4">
         <Link href="/" className="flex items-center gap-2 font-bold text-xl group">
           <Film className="h-6 w-6 transition-transform group-hover:rotate-12 duration-300" />
-          <span className="bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">MovieFlix</span>
+          <span className="bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">CineShift</span>
         </Link>
 
-        <Button 
-          variant="ghost" 
-          className="ml-auto md:hidden p-2" 
+        <Button
+          variant="ghost"
+          className="ml-auto md:hidden p-2"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           aria-label="Toggle navigation menu"
           aria-expanded={isMenuOpen}
@@ -146,9 +146,9 @@ export default function Navbar() {
                 <ChevronDown className="h-5 w-5 md:h-4 md:w-4 transition-transform group-data-[state=open]:rotate-180" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent 
-              align="start" 
-              side="bottom" 
+            <DropdownMenuContent
+              align="start"
+              side="bottom"
               className="w-[220px] p-3 max-h-[calc(100vh-8rem)] overflow-y-auto md:max-h-none md:overflow-visible"
             >
               {genreCategories.map((category, index) => (

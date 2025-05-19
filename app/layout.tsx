@@ -9,9 +9,9 @@ import { Film } from "lucide-react"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "MovieFlix - Browse Movies",
+  title: "CineShift - Browse Movies",
   description: "Browse and discover movies from TMDb",
-    generator: 'v0.dev'
+  generator: 'v0.dev'
 }
 
 export default function RootLayout({
@@ -32,7 +32,7 @@ export default function RootLayout({
                   <div className="flex items-center gap-2 mb-4 md:mb-0">
                     <Film className="h-6 w-6 text-primary" />
                     <span className="font-bold text-xl bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
-                      MovieFlix
+                      CineShift
                     </span>
                   </div>
                   <div className="text-center md:text-right">
