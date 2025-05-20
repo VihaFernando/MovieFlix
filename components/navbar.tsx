@@ -58,14 +58,13 @@ export default function Navbar() {
   const pathname = usePathname()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
-  // Close mobile menu when pathname changes
   useEffect(() => {
     setIsMenuOpen(false)
   }, [pathname])
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center ml-4 md:ml-4">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:bg-transparent md:backdrop-blur-md">
+      <div className="container flex h-16 items-center px-4 md:px-4">
         <Link href="/" className="flex items-center gap-2 font-bold text-xl group">
           <Film className="h-6 w-6 transition-transform group-hover:rotate-12 duration-300" />
           <span className="bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">CineShift</span>
@@ -83,9 +82,9 @@ export default function Navbar() {
 
         <nav
           className={cn(
-            "md:flex items-center gap-6 md:ml-10",
+            "md:flex items-center gap-6 md:ml-auto",
             isMenuOpen
-              ? "flex flex-col items-start gap-6 absolute inset-x-0 top-16 bg-background border-b px-6 py-8 w-full max-h-[calc(100vh-4rem)] overflow-y-auto md:static md:flex-row md:items-center md:border-0 md:p-0 md:bg-transparent md:max-h-none md:overflow-visible animate-in slide-in-from-top-5 duration-300 ease-out"
+              ? "flex flex-col items-start gap-6 absolute top-16 bg-gray-950 border-b px-4 py-8 w-[95%] overflow-x-hidden max-h-[calc(100vh-4rem)] overflow-y-auto md:static md:flex-row md:items-center md:border-0 md:p-0 md:bg-transparent md:max-h-none md:overflow-visible animate-in slide-in-from-top-5 duration-300 ease-out"
               : "hidden"
           )}
         >
@@ -149,7 +148,8 @@ export default function Navbar() {
             <DropdownMenuContent
               align="start"
               side="bottom"
-              className="w-[220px] p-3 max-h-[calc(100vh-8rem)] overflow-y-auto md:max-h-none md:overflow-visible"
+              className="w-[220px] p-3 bg-gray-900/90 backdrop-blur-md max-h-[50vh] overflow-y-auto md:max-h-none md:overflow-visible"
+              style={{ top: "100%", left: 0 }}
             >
               {genreCategories.map((category, index) => (
                 <div key={category.name}>

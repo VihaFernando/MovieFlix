@@ -18,7 +18,7 @@ export default function MovieGrid({ movies, title }: MovieGridProps) {
     <div className="space-y-4">
       {title && <h2 className="text-2xl font-bold">{title}</h2>}
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
         {movies.map((movie) => (
           <MovieCard
             key={movie.id}

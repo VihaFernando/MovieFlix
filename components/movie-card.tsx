@@ -27,20 +27,20 @@ export default function MovieCard({ id, title, posterPath, voteAverage, releaseD
             src={imageUrl || "/placeholder.svg"}
             alt={title}
             fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            sizes="(max-width: 480px) 50vw, (max-width: 640px) 33vw, (max-width: 1024px) 25vw, 20vw"
             className="object-cover group-hover:scale-110 transition-transform duration-500"
             priority={false}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
-            <p className="text-white font-medium line-clamp-2">{title}</p>
+            <p className="text-white font-medium line-clamp-2 text-xs sm:text-sm">{title}</p>
           </div>
         </div>
-        <CardContent className="p-4">
-          <h3 className="font-semibold line-clamp-1">{title}</h3>
-          <div className="flex items-center justify-between mt-2 text-sm text-muted-foreground">
+        <CardContent className="p-2 sm:p-4">
+          <h3 className="font-semibold line-clamp-1 text-sm sm:text-base">{title}</h3>
+          <div className="flex items-center justify-between mt-1 sm:mt-2 text-xs sm:text-sm text-muted-foreground">
             {year && <span>{year}</span>}
             <div className="flex items-center">
-              <Star className="w-4 h-4 mr-1 fill-yellow-400 text-yellow-400" />
+              <Star className="w-3 h-3 sm:w-4 sm:h-4 mr-1 fill-yellow-400 text-yellow-400" />
               <span>{voteAverage.toFixed(1)}</span>
             </div>
           </div>
